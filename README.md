@@ -1,16 +1,94 @@
-# React + Vite
+# Property react app frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React frontend for a property listing site. Visitors browse homes for sale and rent, sign in with an email OTP, and book viewings. Admins manage listings, users, bookings, and contact messages from a separate dashboard.
 
-Currently, two official plugins are available:
+This repo holds the frontend only. It talks to a Spring Boot REST API that runs on `http://localhost:3060` and is kept in a separate repository.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tech stack
 
-## React Compiler
+- React 18 with Vite 7
+- Tailwind CSS 4, plus Bootstrap 5 loaded from a CDN in `index.html`
+- React Router 6 for routing
+- Axios for API calls, with a JWT interceptor in `src/services/axiosInstance.js`
+- Framer Motion for page animations
+- lucide-react icons, react-hot-toast notifications, react-select dropdowns
+- jsPDF and jspdf-autotable for the admin PDF report
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Prices are shown in Indian rupees.
 
-## Expanding the ESLint configuration
+## Getting started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+You need Node.js 20.19 or newer (or 22.12 and up), which Vite 7 requires.
+
+```bash
+npm install
+npm run dev
+```
+
+The app opens at `http://localhost:5173`. Start the backend first, or every page that loads data will show empty results.
+
+Other scripts:
+
+| Command | What it does |
+|---|---|
+| `npm run build` | Production build into `dist/` |
+| `npm run preview` | Serves the production build locally |
+| `npm run lint` | Runs ESLint |
+
+## Backend connection
+
+Most requests go through `src/services/axiosInstance.js`, which has `baseURL` set to `http://localhost:3060`. A few components (login, OTP, admin login, contact form) call full `http://localhost:3060/...` URLs directly.
+
+`src/.env` defines `VITE_API_URL`, but Vite only reads `.env` from the project root, so that file has no effect where it sits now. To deploy against a different API host, move the file to the root and replace the hardcoded URLs with `import.meta.env.VITE_API_URL`.
+
+## Pages
+
+Public:
+
+| Route | Page |
+|---|---|
+| `/` | Landing page with featured listings loaded from the API |
+| `/login` | User sign-in by email and phone, then a 6-digit OTP sent by email |
+| `/adminlogin` | Admin sign-in with email and password |
+| `/adminregister` | Admin registration |
+
+Signed-in users:
+
+| Route | Page |
+|---|---|
+| `/home` | All listings, plus the user's own bookings |
+| `/buy` | Listings for sale |
+| `/rent` | Listings for rent |
+| `/featured` | Featured listings |
+| `/contact` | Contact form |
+
+Admins:
+
+| Route | Page |
+|---|---|
+| `/admin` | Dashboard with counts, recent listings, a featured toggle, and a PDF report |
+| `/admin/properties` | Add, edit, and delete listings, with image upload |
+| `/admin/users` | User list, with delete |
+| `/admin/bookings` | Approve or reject viewing requests |
+| `/admin/contacts` | Messages sent through the contact form |
+
+User routes are wrapped in `PrivateRoute` and admin routes in `AdminRoute`. Both check the tokens saved in `localStorage` after login.
+
+## Project layout
+
+```
+src/
+  Component/
+    Admin/        admin dashboard
+    Auth/         login, OTP, admin login and registration
+    pages/        landing, home, buy, rent, featured, contact
+    MyRoutes.jsx  route table
+    ...           navbar, footer, property card, booking modal, admin pages
+  services/       axios setup, API helpers, PDF report
+  assets/Images/  fallback and hero photos
+  index.css       Tailwind import and theme tokens
+```
+
+## Theme
+
+Colors, fonts, and corner radius live in the `@theme` block in `src/index.css`. The palette is forest green with stone neutrals and a brass accent. Headings use Fraunces and body text uses Manrope, both loaded from Google Fonts. Tailwind's `blue`, `indigo`, `slate`, and `gray` scales are remapped there too, so changing those values restyles every page at once.
